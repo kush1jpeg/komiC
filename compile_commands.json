@@ -1,0 +1,110 @@
+[
+  {
+    "file": "src/ast.c",
+    "arguments": [
+      "/usr/sbin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "src/ast.c",
+      "-o",
+      "build/ast.o"
+    ],
+    "directory": "/home/kush/gitProjects/komiC",
+    "output": "build/ast.o"
+  },
+  {
+    "file": "src/cli_args.c",
+    "arguments": [
+      "/usr/sbin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "src/cli_args.c",
+      "-o",
+      "build/cli_args.o"
+    ],
+    "directory": "/home/kush/gitProjects/komiC",
+    "output": "build/cli_args.o"
+  },
+  {
+    "file": "src/lexer.c",
+    "arguments": [
+      "/usr/sbin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "src/lexer.c",
+      "-o",
+      "build/lexer.o"
+    ],
+    "directory": "/home/kush/gitProjects/komiC",
+    "output": "build/lexer.o"
+  },
+  {
+    "file": "src/main.c",
+    "arguments": [
+      "/usr/sbin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "src/main.c",
+      "-o",
+      "build/main.o"
+    ],
+    "directory": "/home/kush/gitProjects/komiC",
+    "output": "build/main.o"
+  },
+  {
+    "file": "src/parser.c",
+    "arguments": [
+      "/usr/sbin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "src/parser.c",
+      "-o",
+      "build/parser.o"
+    ],
+    "directory": "/home/kush/gitProjects/komiC",
+    "output": "build/parser.o"
+  },
+  {
+    "file": "src/token.c",
+    "arguments": [
+      "/usr/sbin/gcc",
+      "-std=c11",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "src/token.c",
+      "-o",
+      "build/token.o"
+    ],
+    "directory": "/home/kush/gitProjects/komiC",
+    "output": "build/token.o"
+  }
+]
