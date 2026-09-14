@@ -2,36 +2,32 @@ CC      := gcc
 CFLAGS  := -std=c11 -Wall -Wextra -Wpedantic -g -Iinclude
 LDFLAGS :=
 
-BIN     := komic
+BIN       := komic
 SRC_DIR   := src
 BUILD_DIR := build
 
-SRC := $(wildcard $(SRC_DIR)/*.c)
-OBJ := $(SRC:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+SRC := $(shell find $(SRC_DIR) -name '*.c')
+OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
 
 .PHONY: all clean test compdb
 
 all: $(BIN)
 
-# Link the final binary from all object files
+# Link all object files into the final executable
 $(BIN): $(OBJ)
 	$(CC) $(OBJ) -o $@ $(LDFLAGS)
 
-# Compile each .c into build/, creating build/ if it doesn't exist
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
+# Compile src/foo/bar.c -> build/foo/bar.o
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
 
 clean:
 	rm -rf $(BUILD_DIR) $(BIN)
 
-# Run everything under tests/ once you have a runner script or test binaries there
 test: all
-	@echo "wire this up once tests/ has something to run"
+	@echo "wire tests here later"
 
-# Generates compile_commands.json so clangd stops guessing at flags/includes
-# Needs `bear` installed (apt install bear / brew install bear)
+# Generate compile_commands.json using bear
 compdb: clean
 	bear -- $(MAKE) all

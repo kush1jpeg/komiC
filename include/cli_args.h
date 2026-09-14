@@ -2,8 +2,7 @@
 #define KOMI_CLI_ARGS_H
 #include <stdbool.h>
 
-typedef struct CliArgs
-{
+typedef struct CliArgs {
   const char *source_filename; // Filename of the source file (with extension)
   bool stop_after_lexer;       // --lex
   bool stop_after_parser;      // --parse
