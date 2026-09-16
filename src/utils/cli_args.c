@@ -47,13 +47,13 @@ CliArgs parse_cli_args(int argc, char **argv) {
       result.stop_after_parser = true;
     } else if (strcmp(arg, "--validate") == 0) {
       result.stop_after_semantic_analysis = true;
-    } else if (strcmp(arg, "--codegen")) {
+    } else if (strcmp(arg, "--codegen") == 0) {
       result.codegen_only = true;
-    } else if (strcmp(arg, "-S")) {
+    } else if (strcmp(arg, "-S") == 0) {
       result.compile_only = true;
-    } else if (strcmp(arg, "-c")) {
+    } else if (strcmp(arg, "-c") == 0) {
       result.stop_before_linker = true;
-    } else if (strcmp(arg, "-")) {
+    } else if (strcmp(arg, "-") == 0) {
       (void)print_usage(
           stderr,
           "komiC: fatal error: unrecognized command-line option: '%.*s'\n");
