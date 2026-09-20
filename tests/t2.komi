@@ -1,0 +1,16 @@
+// basic variable declaration
+let x = 10;
+
+// function declaration
+fn add(a: int, b: int) -> int {
+    // return the sum
+    return a / b;
+}
+
+// conditional test
+if x >= 5 && x != 7 {
+    // increment x
+    x = x + 1;
+}
+
+// comment at end of file

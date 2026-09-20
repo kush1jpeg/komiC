@@ -1,8 +1,10 @@
-#include "frontend.h"
+#include "frontend/frontend.h"
 #include "token.h"
 #include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct Lexer {
@@ -37,10 +39,17 @@ static Token make_token(const Lexer *lexer, TokenTag type) {
   };
 }
 
-static char peek_next(const Lexer *lexer) {
+static char peek(const Lexer *lexer) {
   if (lexer_is_at_end(lexer)) {
     return '\0';
   }
+  return lexer->current[0];
+}
+
+static char peek_next(const Lexer *lexer) {
+  if (lexer->current + 1 >= lexer->end)
+    return '\0';
+
   return lexer->current[1];
 }
 
@@ -55,13 +64,15 @@ static char advance(Lexer *lexer) {
 }
 
 static void skip_comments(Lexer *lexer) {
-  while (*lexer->current != '\n' && !lexer_is_at_end(lexer)) {
+  while (!lexer_is_at_end(lexer) && *lexer->current != '\n') {
     advance(lexer);
   }
 }
 
-static void skipWhitespaces(Lexer *lexer) {
+static void skip_whitespaces(Lexer *lexer) {
   for (;;) {
+    if (lexer_is_at_end(lexer))
+      return;
     char c = *lexer->current;
     switch (c) {
     case ' ':
@@ -75,7 +86,10 @@ static void skipWhitespaces(Lexer *lexer) {
         skip_comments(lexer);
         break;
       }
+      return;
     }
+    default:
+      return;
     }
   }
 }
@@ -120,7 +134,8 @@ static bool check_identifier(char c) {
 }
 
 static Token scan_identifier(Lexer *lexer) {
-  while (is_digit(*lexer->current) || check_identifier(*lexer->current)) {
+  while (!lexer_is_at_end(lexer) &&
+         (is_digit(*lexer->current) || check_identifier(*lexer->current))) {
     advance(lexer);
   }
   return make_token(lexer, get_identifier_type(lexer));
@@ -164,7 +179,8 @@ static Token scan_symbol(Lexer *lexer) {
     return make_token(lexer, TOKEN_PLUS);
 
   case '-':
-    if (peek_next(lexer) == '>') {
+    if (peek(lexer) == '>') {
+      advance(lexer);
       return make_token(lexer, TOKEN_ARROW);
     }
     return make_token(lexer, TOKEN_MINUS);
@@ -180,42 +196,52 @@ static Token scan_symbol(Lexer *lexer) {
 
   // assignment / equality
   case '=':
-    if (peek_next(lexer) == '=')
+    if (peek(lexer) == '=') {
+      advance(lexer);
       return make_token(lexer, TOKEN_EQUAL_EQUAL);
-
+    }
     return make_token(lexer, TOKEN_EQUAL);
 
   // logical not / inequality
   case '!':
-    if (peek_next(lexer) == '=')
+    if (peek(lexer) == '=') {
+      advance(lexer);
       return make_token(lexer, TOKEN_NOT_EQUAL);
+    }
 
     return make_token(lexer, TOKEN_NOT);
 
   // comparison
   case '<':
-    if (peek_next(lexer) == '=')
+    if (peek(lexer) == '=') {
+      advance(lexer);
       return make_token(lexer, TOKEN_LESS_EQUAL);
+    }
 
     return make_token(lexer, TOKEN_LESS);
 
   case '>':
-    if (peek_next(lexer) == '=')
+    if (peek(lexer) == '=') {
+      advance(lexer);
       return make_token(lexer, TOKEN_GREATER_EQUAL);
-
+    }
     return make_token(lexer, TOKEN_GREATER);
 
   // logical AND
   case '&':
-    if (peek_next(lexer) == '&')
+    if (peek(lexer) == '&') {
+      advance(lexer);
       return make_token(lexer, TOKEN_AND_AND);
+    }
 
     return make_token(lexer, TOKEN_ERROR);
 
   // logical OR
   case '|':
-    if (peek_next(lexer) == '|')
+    if (peek(lexer) == '|') {
+      advance(lexer);
       return make_token(lexer, TOKEN_OR_OR);
+    }
 
     return make_token(lexer, TOKEN_ERROR);
   default:
@@ -224,13 +250,13 @@ static Token scan_symbol(Lexer *lexer) {
 }
 
 static Token scan_token(Lexer *lexer) {
-  skipWhitespaces(lexer);
+  skip_whitespaces(lexer);
   lexer->tokenStart = lexer->current;
 
   if (lexer_is_at_end(lexer))
     return make_token(lexer, TOKEN_EOF);
 
-  char curr = advance(lexer);
+  char curr = advance(lexer); // already advances
 
   if (is_digit(curr))
     return scan_number(lexer);
@@ -241,11 +267,41 @@ static Token scan_token(Lexer *lexer) {
   return scan_symbol(lexer);
 }
 
+static void tokens_push(Tokens *tokens, Token token) {
+  if (tokens->token_count == tokens->capacity) {
+    uint32_t new_capacity = tokens->capacity == 0 ? 16 : tokens->capacity * 2;
+
+    tokens->token_types =
+        realloc(tokens->token_types, new_capacity * sizeof(TokenTag));
+    tokens->token_starts =
+        realloc(tokens->token_starts, new_capacity * sizeof(uint32_t));
+    tokens->token_sizes =
+        realloc(tokens->token_sizes, new_capacity * sizeof(uint32_t));
+
+    if (!tokens->token_types || !tokens->token_starts || !tokens->token_sizes) {
+      fprintf(stderr, "komiC: out of memory\n");
+      exit(1);
+    }
+    tokens->capacity = new_capacity;
+  }
+
+  tokens->token_types[tokens->token_count] = token.tag;
+  tokens->token_starts[tokens->token_count] = token.start;
+  tokens->token_sizes[tokens->token_count] = token.size;
+  tokens->token_count++;
+}
+
 Tokens lex(SourceFile source) {
   Lexer lexer = lexer_create(source.data, source.size);
+  Tokens tokens = {0};
 
   for (;;) {
     const Token token = scan_token(&lexer);
-    // ....continue
+
+    tokens_push(&tokens, token);
+
+    if (token.tag == TOKEN_EOF)
+      break;
   }
+  return tokens;
 }

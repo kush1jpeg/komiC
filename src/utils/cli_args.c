@@ -31,6 +31,11 @@ void print_options(void) {
   }
 }
 
+static bool has_komi_extension(const char *filename) {
+  const char *ext = strrchr(filename, '.');
+  return ext != NULL && strcmp(ext, ".komi") == 0;
+}
+
 CliArgs parse_cli_args(int argc, char **argv) {
   CliArgs result = {0};
 
@@ -59,8 +64,14 @@ CliArgs parse_cli_args(int argc, char **argv) {
           "komiC: fatal error: unrecognized command-line option: '%.*s'\n");
       exit(1);
     } else {
-      // TODO: support more than one source file
-      result.source_filename = argv[i];
+      if (has_komi_extension(argv[i])) {
+        result.source_filename = argv[i];
+      } else {
+        print_usage(
+            stderr,
+            "komiC: fatal error: unrecognized command-line option: '%s'\n");
+        exit(1);
+      }
     }
   }
 

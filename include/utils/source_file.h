@@ -8,7 +8,7 @@ typedef struct SourceFile {
   size_t size;
 } SourceFile;
 
-SourceFile map_file(const char *filename);
+SourceFile mmap_file(const char *filename);
 void unmap_file(SourceFile *source);
 
 #endif

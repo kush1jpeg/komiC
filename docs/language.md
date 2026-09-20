@@ -541,6 +541,44 @@ Example:
 
 ## 18. Operator Precedence
 
+typedef enum Precedence {
+  PREC_NONE = 0,
+  PREC_ASSIGNMENT, // =
+  PREC_OR,         // ||
+  PREC_AND,        // &&
+  PREC_EQUALITY,   // == !=
+  PREC_COMPARISON, // < <= > >=
+  PREC_TERM,       // + -
+  PREC_FACTOR,     // * / %
+  PREC_UNARY,      // ! - (prefix)
+  PREC_CALL,       // ()
+  PREC_PRIMARY,
+} Precedence;
+
+prefix:
+-   unary minus
+!   logical not
+(   grouped expression
+literal
+identifier
+
+infix:
++
+-
+*
+/
+%
+==
+!=
+<
+<=
+>
+>=
+&&
+||
+=
+(
+
 Highest to lowest:
 
 ```text
