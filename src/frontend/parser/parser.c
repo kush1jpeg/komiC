@@ -34,20 +34,6 @@ void parser_error(Parser *parser, char *message) {
   };
 }
 
-ASTNode *create_leaf(Token token, ASTNode *left, ASTNode *right) {
-  ASTNode *node = malloc(sizeof(*node));
-  if (node == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-
-  node->kind = token.tag;
-  node->token = token;
-  node->left = left;
-  node->right = right;
-  return node;
-}
-
 bool parser_match(Parser *parser, TokenTag tag) {
   if (get_token(parser->tokens, parser->current).tag != tag)
     return false;
