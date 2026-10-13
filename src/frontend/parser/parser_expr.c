@@ -1,5 +1,7 @@
+#include "frontend/ast.h"
 #include "parser_internal.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 static ASTNode *parse_prefix(Parser *parser, Token token);
 static ASTNode *parse_infix(Parser *parser, ASTNode *left, Token op);
@@ -64,7 +66,7 @@ static ASTNode *parse_unary(Parser *parser, Token op) {
     return NULL;
 
   // i am attaching operand to the right side
-  ASTNode *unary = create_leaf(op, NULL, operand);
+  ASTNode *unary = create_ast_unary(op, operand);
   return unary;
 }
 
@@ -75,11 +77,9 @@ static ASTNode *parse_grouping(Parser *parser) {
     return NULL;
 
   if (!parser_match(parser, TOKEN_RIGHT_PAREN)) {
-    fprintf(stderr, "komic: expected ')' after expression\n");
-    parser->has_error = true;
+    parser_error(parser, "komic: expected ')' after expression");
     return exp;
   }
-
   return exp;
 }
 
@@ -92,10 +92,10 @@ static ASTNode *parse_prefix(Parser *parser, Token token) {
   case TOKEN_STRING:
   case TOKEN_KEYWORD_TRUE:
   case TOKEN_KEYWORD_FALSE:
-    return create_leaf(token, NULL, NULL);
+    return create_ast_literal(token);
 
   case TOKEN_IDENTIFIER:
-    return create_leaf(token, NULL, NULL);
+    return create_ast_identifier(token);
 
   case TOKEN_MINUS:
   case TOKEN_NOT:
@@ -121,7 +121,7 @@ static ASTNode *parse_assignment(Parser *parser, ASTNode *left, Token op) {
   if (right == NULL)
     return NULL;
 
-  return create_leaf(op, left, right);
+  return create_ast_binary(op, left, right);
 }
 
 static ASTNode *parse_binary(Parser *parser, ASTNode *left, Token op) {
@@ -132,10 +132,61 @@ static ASTNode *parse_binary(Parser *parser, ASTNode *left, Token op) {
   if (right == NULL)
     return NULL;
 
-  return create_leaf(op, left, right);
+  return create_ast_binary(op, left, right);
 }
 
-ASTNode *parse_infix(Parser *parser, ASTNode *left, Token op) {
+static void ast_call_push_argument(ASTNode *call, ASTNode *arg,
+                                   Parser *parser) {
+  if (call->kind != AST_CALL) {
+    char msg[128];
+    snprintf(msg, sizeof(msg), "komic: expected AST_CALL node, got %s",
+             ast_tag_name(call->kind));
+    parser_error(parser, msg);
+    return;
+  }
+
+  if (call->call.argument_count == call->call.argument_capacity) {
+    size_t newSize = call->call.argument_capacity == 0
+                         ? 4
+                         : call->call.argument_capacity * 2;
+    ASTNode **new_args =
+        realloc(call->call.arguments, newSize * sizeof(*new_args));
+    if (new_args == NULL) {
+      perror("realloc");
+      exit(EXIT_FAILURE);
+    }
+
+    call->call.arguments = new_args;
+    call->call.argument_capacity = newSize;
+  }
+
+  call->call.arguments[call->call.argument_count++] = arg;
+}
+
+static ASTNode *parse_call(Parser *parser, ASTNode *callee) {
+  ASTNode *call = create_ast_call(callee);
+  do {
+    ASTNode *arg = parse_expression(parser);
+    if (arg == NULL) {
+      free_ast(call);
+      return NULL;
+    }
+    ast_call_push_argument(call, arg, parser);
+
+  } while (parser_match(parser, TOKEN_COMMA));
+
+  if (!parser_match(parser, TOKEN_RIGHT_PAREN)) {
+    parser_error(parser, "expected ')' after function arguments");
+
+    return call;
+  }
+  return call;
+}
+
+ASTNode *parse_infix(Parser *parser, ASTNode *left, Token op)
+// Tokens that can be in-between expressions:
+{
+  char msg[128] = "";
   switch (op.tag) {
 
   // arithmetic
@@ -164,12 +215,14 @@ ASTNode *parse_infix(Parser *parser, ASTNode *left, Token op) {
   case TOKEN_EQUAL:
     return parse_assignment(parser, left, op);
 
+    // function call
+  case TOKEN_LEFT_PAREN:
+    return parse_call(parser, left);
+
   default:
-
-    fprintf(stderr, "komiLang: invalid infix operator %s\n",
-            token_tag_name(op.tag));
-
-    parser->has_error = true;
+    snprintf(msg, sizeof(msg), "komiLang: invalid infix operator %s",
+             token_tag_name(op.tag));
+    parser_error(parser, msg);
 
     return NULL;
   }

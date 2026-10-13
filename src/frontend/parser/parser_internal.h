@@ -45,7 +45,6 @@ Token parser_current(const Parser *parser);
 Token parser_previous(const Parser *parser);
 Token parser_advance(Parser *parser);
 
-bool parser_check(const Parser *parser, TokenTag tag);
 bool parser_match(Parser *parser, TokenTag tag);
 
 /* statements */
@@ -55,7 +54,7 @@ ASTNode *parse_statement(Parser *parser);
 ASTNode *parse_declaration(Parser *parser);
 
 /* errors */
-void parser_error(Parser *parser, char *message);
+void parser_error(Parser *parser, const char *message);
 
 #endif
 

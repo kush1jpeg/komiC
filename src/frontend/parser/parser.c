@@ -1,6 +1,7 @@
 #include "parser_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 Token parser_advance(Parser *parser) {
   Token token = get_token(parser->tokens, parser->current);
@@ -10,11 +11,14 @@ Token parser_advance(Parser *parser) {
   return token;
 }
 
-void parser_error(Parser *parser, char *message) {
+void parser_error(Parser *parser, const char *message) {
   if (parser->in_panic_mode) {
     return;
   }
-  parser->in_panic_mode = true;
+  parser->in_panic_mode = false;
+  // explicitly keeping it false cuz in dev phase + not made recovery handling
+  // for in_panic_mode
+
   parser->has_error = true;
 
   if (parser->length == parser->capacity) {
@@ -29,8 +33,17 @@ void parser_error(Parser *parser, char *message) {
     parser->capacity = new_capacity;
   }
 
+  // making a copy of the message to avoid dangling pointer issues
+  size_t len = strlen(message);
+  char *copy = malloc(len + 1);
+  if (copy == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
+  memcpy(copy, message, len + 1);
   parser->data[parser->length++] = (Error){
-      .msg = message,
+      .msg = copy,
   };
 }
 

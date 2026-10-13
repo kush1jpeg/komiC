@@ -2,7 +2,7 @@
 #define KOMI_DIAG_H
 
 typedef struct Error {
-  char *msg;
+  const char *msg;
 } Error;
 
 #endif
